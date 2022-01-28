@@ -71,8 +71,6 @@ if ( ! class_exists( 'Easymerchant_For_Give' ) ) {
 			// For Multi-step Sequoia Form Template.
 			printf(
 				'
-					<button class="btn btn-success btn-lg col-xs-6 col-xs-offset-3 " style="margin-top: 20%;" type="button" id="easyBtn">Pay Now</button>
-					<div id="easyload"></div>
 					<fieldset class="no-fields">
 						<div style="display: flex; justify-content: center; margin-top: 20px;">
 						<svg width="173" height="73" viewBox="0 0 173 73" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
