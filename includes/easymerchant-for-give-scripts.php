@@ -64,7 +64,7 @@ function easymerchant_for_give_frontend_scripts() {
 	if ( apply_filters( 'easymerchant_for_give_js_loading_conditions', easymerchant_for_give_is_any_payment_method_active() ) ) {
 		$scripts_footer = give_is_setting_enabled( give_get_option( 'scripts_footer' ) ) ? true : false;
 		$scripts_footer = true;
-		wp_register_script( 'easymerchant-js', 'http://easymerchant-api.test/easyMerchant.js', [], GIVE_VERSION, $scripts_footer );
+		wp_register_script( 'easymerchant-js', 'https://api.easymerchant.io/assets/checkout/easyMerchant.js', [], GIVE_VERSION, $scripts_footer );
 		wp_enqueue_script( 'easymerchant-js' );
 		wp_localize_script( 'easymerchant-js', 'easymerchant_for_give_vars', $stripe_vars );
 	}

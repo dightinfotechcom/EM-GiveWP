@@ -3,7 +3,7 @@
  * Plugin Name:  		EasyMerchant for Give
  * Plugin URI:        	https://easymerchant.io/
  * Description:        	Adds the Easymerchant.io payment gateway to the available GiveWP payment methods.
- * Version:            	1.0.0
+ * Version:            	1.0.2
  * Requires at least:   4.9
  * Requires PHP:        5.6
  * Author:            	EasyMerchant
@@ -26,8 +26,8 @@
  */
 function easymerchant_for_give_register_payment_method( $gateways ) {  
   $gateways['easymerchant'] = array(
-    'admin_label'    => __( 'EasyMerchant - Credit Card', 'easymerchant-for-give' ), // This label will be displayed under Give settings in admin.
-    'checkout_label' => __( 'Credit Card', 'easymerchant-for-give' ), // This label will be displayed on donation form in frontend.
+    'admin_label'    => __( 'EasyMerchant', 'easymerchant-for-give' ), // This label will be displayed under Give settings in admin.
+    'checkout_label' => __( 'EasyMerchant', 'easymerchant-for-give' ), // This label will be displayed on donation form in frontend.
   ); 
   return $gateways;
 }
@@ -132,3 +132,78 @@ function easymerchant_include_frontend_files() {
 
   require_once plugin_dir_path(__FILE__) . 'includes/easymerchant-for-give-scripts.php';
 }
+
+/**
+ * Process Square checkout submission.
+ *
+ * @param array $posted_data List of posted data.
+ *
+ * @since  1.0.0
+ * @access public
+ *
+ * @return void
+ */
+
+// change the easymerchant_for_give prefix to avoid collisions with other functions.
+function easymerchant_for_give_process_easymerchant_donation( $posted_data ) {
+
+  // Make sure we don't have any left over errors present.
+  give_clear_errors();
+
+  // Any errors?
+  $errors = give_get_errors();
+
+  // No errors, proceed.
+  if ( ! $errors ) {
+
+    $form_id         = intval( $posted_data['post_data']['give-form-id'] );
+    $price_id        = ! empty( $posted_data['post_data']['give-price-id'] ) ? $posted_data['post_data']['give-price-id'] : 0;
+    $donation_amount = ! empty( $posted_data['price'] ) ? $posted_data['price'] : 0;
+
+    // Setup the payment details.
+    $donation_data = array(
+      'price'           => $donation_amount,
+      'give_form_title' => $posted_data['post_data']['give-form-title'],
+      'give_form_id'    => $form_id,
+      'give_price_id'   => $price_id,
+      'date'            => $posted_data['date'],
+      'user_email'      => $posted_data['user_email'],
+      'purchase_key'    => $posted_data['purchase_key'],
+      'currency'        => give_get_currency( $form_id ),
+      'user_info'       => $posted_data['user_info'],
+      'status'          => 'complete',
+      'gateway'         => 'easymerchant',
+    );
+
+    // Record the pending donation.
+    $donation_id = give_insert_payment( $donation_data );
+
+    if ( ! $donation_id ) {
+
+      // Record Gateway Error as Pending Donation in Give is not created.
+      give_record_gateway_error(
+        __( 'Easymerchant Error', 'easymerchant-for-give' ),
+        sprintf(
+        /* translators: %s Exception error message. */
+          __( 'Unable to create a pending donation with Give.', 'easymerchant-for-give' )
+        )
+      );
+
+      // Send user back to checkout.
+      give_send_back_to_checkout( '?payment-mode=easymerchant' );
+      return;
+    }
+
+    // Do the actual payment processing using the custom payment gateway API. To access the GiveWP settings, use give_get_option() 
+                // as a reference, this pulls the API key entered above: give_get_option('easymerchant_for_give_easymerchant_api_key')
+    give_send_to_success_page();
+
+  } else {
+
+    // Send user back to checkout.
+    give_send_back_to_checkout( '?payment-mode=easymerchant' );
+  } // End if().
+}
+
+// change the easymerchant_for_give prefix to avoid collisions with other functions.
+add_action( 'give_gateway_easymerchant', 'easymerchant_for_give_process_easymerchant_donation' );
