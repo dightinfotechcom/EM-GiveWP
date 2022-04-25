@@ -34,6 +34,14 @@ function easymerchant_for_give_register_payment_method( $gateways ) {
 
 add_filter( 'give_payment_gateways', 'easymerchant_for_give_register_payment_method' );
 
+function easymerchant_for_give_register_recurring_payment_method($availableGateway) {
+  $availableGateway['easymerchant'] = 'easymerchant-for-give';
+  return $availableGateway;
+}
+
+
+add_filter( 'give_recurring_available_gateways', 'easymerchant_for_give_register_recurring_payment_method');
+
 easymerchant_includes();
 
 /**
@@ -207,3 +215,41 @@ function easymerchant_for_give_process_easymerchant_donation( $posted_data ) {
 
 // change the easymerchant_for_give prefix to avoid collisions with other functions.
 add_action( 'give_gateway_easymerchant', 'easymerchant_for_give_process_easymerchant_donation' );
+
+/**
+ * Display Recurring Add-on Update Notice.
+ *
+ * @since 2.0.6
+ */
+function easymerchant_for_give_display_minimum_recurring_version_notice() {
+
+  if (
+    defined( 'GIVE_RECURRING_PLUGIN_BASENAME' ) &&
+    is_plugin_active( GIVE_RECURRING_PLUGIN_BASENAME )
+  ) {
+
+    if (
+      version_compare( EASYMERCHANT_FOR_GIVE_VERSION, '2.0.6', '>=' ) &&
+      version_compare( EASYMERCHANT_FOR_GIVE_VERSION, '2.1', '<' ) &&
+      version_compare( GIVE_RECURRING_VERSION, '1.7', '<' )
+    ) {
+      Give()->notices->register_notice( array(
+        'id'          => 'easymerchant-for-give-require-minimum-recurring-version',
+        'type'        => 'error',
+        'dismissible' => false,
+        'description' => __( 'Please update the <strong>GiveWP Recurring Donations</strong> add-on to version 1.7+ to be compatible with the latest version of the EasyMerchant payment gateway.', 'easymerchant-for-give' ),
+      ) );
+    } elseif (
+      version_compare( EASYMERCHANT_FOR_GIVE_VERSION, '2.1', '>=' ) &&
+      version_compare( GIVE_RECURRING_VERSION, '1.8', '<' )
+    ) {
+      Give()->notices->register_notice( array(
+        'id'          => 'easymerchant-for-give-require-minimum-recurring-version',
+        'type'        => 'error',
+        'dismissible' => false,
+        'description' => __( 'Please update the <strong>GiveWP Recurring Donations</strong> add-on to version 1.8+ to be compatible with the latest version of the EasyMerchant payment gateway.', 'easymerchant-for-give' ),
+      ) );
+    }
+  }
+}
+add_action( 'admin_notices', 'easymerchant_for_give_display_minimum_recurring_version_notice' );
