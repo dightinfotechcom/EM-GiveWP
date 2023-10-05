@@ -15,6 +15,11 @@
  * 
  */
 
+// Plugin constants.
+if (!defined('EASYMERCHANT_FOR_GIVE_VERSION')) {
+    define('EASYMERCHANT_FOR_GIVE_VERSION', '1.0.2');
+}
+
 /**
  * Register payment method.
  *
