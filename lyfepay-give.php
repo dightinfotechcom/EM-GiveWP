@@ -4,7 +4,7 @@
  * Plugin Name:  		lyfePAY
  * Plugin URI:        	https://easymerchant.io/
  * Description:        	Adds the lyfePAY payment gateway to the available Give payment methods.
- * Version:            	2.0.5
+ * Version:            	2.0.4
  * Requires at least:   4.9
  * Requires PHP:        5.6
  * Author:            	lyfePAY
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 
 // Plugin constants.
 if (!defined('LYFEPAY_FOR_GIVE_VERSION')) {
-    define('LYFEPAY_FOR_GIVE_VERSION', '2.0.5');
+    define('LYFEPAY_FOR_GIVE_VERSION', '2.0.4');
 }
 
 lyfepay_givewp_includes();
@@ -34,7 +34,7 @@ function webhook_file_callback()
     if (isset($_GET['give-listener']) && $_GET['give-listener'] == 'lyfepay') {
         $rawRequestBody = file_get_contents("php://input");
 
-        require_once plugin_dir_path(__FILE__) . 'webhook/lyfepay-webhook-handler.php';
+        require_once 'webhook/lyfepay-webhook-handler.php';
         $webhook_handler = new LyfePayWebhookHandler(site_url() . '?give-listener=lyfepay');
         $webhook_handler->handle_webhook_request($rawRequestBody);
     }
@@ -162,14 +162,6 @@ function give_get_donation_lyfepay_cc_info()
     $cc_info['card_cvc']            = !empty($post_data['card_cvc']) ? $post_data['card_cvc'] : '';
     $cc_info['card_exp_month']      = !empty($post_data['card_exp_month_0']) ? $post_data['card_exp_month_0'] : '';
     $cc_info['card_exp_year']       = !empty($post_data['card_exp_year']) ? $post_data['card_exp_year'] : '';
-
-    if(empty($cc_info['card_exp_month']) && !empty($post_data['card_expiry'])) {
-        $card_expiry_array = explode('/', $post_data['card_expiry']);
-        if(!empty($card_expiry_array) && count($card_expiry_array) > 0) {
-            $cc_info['card_exp_month'] = trim($card_expiry_array[0]);
-        }
-    }
-
     // Return cc info.
     return $cc_info;
 }
@@ -218,9 +210,10 @@ add_action('admin_notices', 'lyfepay_givewp_display_minimum_recurring_version_no
 
 // Register the gateway with the givewp gateway api
 add_action('givewp_register_payment_gateway', static function ($paymentGatewayRegister) {
+    // include 'paymentgateways/lyfepay-card/class-lyfepay-gateway.php';
     require_once plugin_dir_path(__FILE__) . 'paymentgateways/lyfepay-card/class-lyfepay-gateway.php';
     $paymentGatewayRegister->registerGateway(LyfePayGateway::class);
-
+    // include 'class-lyfepay-ach.php';
     require_once plugin_dir_path(__FILE__) . 'paymentgateways/lyfepay-ach/class-lyfepay-ach.php';
     $paymentGatewayRegister->registerGateway(LyfePayACH::class);
 });
@@ -229,6 +222,7 @@ add_action('givewp_register_payment_gateway', static function ($paymentGatewayRe
 add_filter(
     "givewp_gateway_lyfepay-gateway_subscription_module",
     static function () {
+        // include 'class-lyfepay-gateway-subscription-module.php';
         require_once plugin_dir_path(__FILE__) . 'paymentgateways/lyfepay-card/class-lyfepay-gateway-subscription-module.php';
         return LyfePayGatewaySubscriptionModule::class;
     }
@@ -237,18 +231,8 @@ add_filter(
 add_filter(
     "givewp_gateway_lyfepay-ach_subscription_module",
     static function () {
+        // include 'class-lyfepay-ach-subscription.php';
         require_once plugin_dir_path(__FILE__) . 'paymentgateways/lyfepay-ach/class-lyfepay-ach-subscription.php';
         return LyfePayACHGatewaySubscriptionModule::class;
     }
 );
-
-add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'add_action_links');
-
-function add_action_links($actions)
-{
-    $settinglinks = array(
-        '<a href="' . admin_url('edit.php?post_type=give_forms&page=give-settings&tab=gateways&section=lyfepay-settings') . '">Settings</a>',
-    );
-    $actions = array_merge($actions, $settinglinks);
-    return $actions;
-}

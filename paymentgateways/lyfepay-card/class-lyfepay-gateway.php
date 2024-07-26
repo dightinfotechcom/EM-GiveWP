@@ -17,7 +17,6 @@ use Give\Framework\Receipts\DonationReceipt;
 
 class LyfePayGateway extends PaymentGateway
 {
-
     /**
      * @inheritDoc
      */
@@ -133,27 +132,16 @@ class LyfePayGateway extends PaymentGateway
         }
 
         try {
-            $curl = curl_init();
-            curl_setopt_array($curl, array(
-                CURLOPT_URL => $apiUrl . '/charges/' . $donation->gatewayTransactionId,
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_ENCODING => '',
-                CURLOPT_MAXREDIRS => 10,
-                CURLOPT_TIMEOUT => 0,
-                CURLOPT_FOLLOWLOCATION => true,
-                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-                CURLOPT_CUSTOMREQUEST => 'GET',
-                CURLOPT_HTTPHEADER => array(
-                    'X-Api-Key: ' . $apiKey . '',
-                    'X-Api-Secret: ' . $apiSecretKey . '',
-                    'Content-Type: application/json',
-                    // 'User-Agent:   LyfePayEmulator/1.0'
-                ),
+            $checkStatusApi = wp_remote_post($apiUrl . '/charges/' . $donation->gatewayTransactionId, array(
+                'method'    => 'GET',
+                'headers'   => array(
+                    'X-Api-Key'     => $apiKey,
+                    'X-Api-Secret'  => $apiSecretKey,
+                    'Content-Type'  => 'application/json',
+                )
             ));
-
-            $checkStatusApi = curl_exec($curl);
-            curl_close($curl);
-            $checkStatus = json_decode($checkStatusApi, true);
+            $checkPaidUnsetteled = wp_remote_retrieve_body($checkStatusApi);
+            $checkStatus = json_decode($checkPaidUnsetteled, true);
             $refundAmount = $checkStatus['data']['amount'] - $donation->amount->formatToDecimal();
             $body = json_encode([
                 "charge_id" => $donation->gatewayTransactionId,
@@ -161,28 +149,18 @@ class LyfePayGateway extends PaymentGateway
             ]);
 
             if ($checkStatus['data']['status'] === 'Paid') {
-                $curl = curl_init();
-                curl_setopt_array($curl, array(
-                    CURLOPT_URL => $apiUrl . '/refunds/',
-                    CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_ENCODING => '',
-                    CURLOPT_MAXREDIRS => 10,
-                    CURLOPT_TIMEOUT => 0,
-                    CURLOPT_FOLLOWLOCATION => true,
-                    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-                    CURLOPT_CUSTOMREQUEST => 'POST',
-                    CURLOPT_POSTFIELDS => $body,
-                    CURLOPT_HTTPHEADER => array(
-                        'X-Api-Key: ' . $apiKey . '',
-                        'X-Api-Secret: ' . $apiSecretKey . '',
-                        'Content-Type: application/json',
-                        // 'User-Agent:   LyfePayEmulator/1.0'
+                $response = wp_remote_post($apiUrl . '/refunds/', array(
+                    'method'    => 'POST',
+                    'headers'   => array(
+                        'X-Api-Key'      => $apiKey,
+                        'X-Api-Secret'   => $apiSecretKey,
+                        'Content-Type'   => 'application/json',
                     ),
+                    'body'               => $body,
                 ));
+                $response_body = wp_remote_retrieve_body($response);
+                $response_data = json_decode($response_body, true);
 
-                $response = curl_exec($curl);
-                curl_close($curl);
-                $response_data = json_decode($response, true);
                 $donation->status = DonationStatus::REFUNDED();
                 $donation->save();
                 DonationNote::create([
@@ -209,7 +187,6 @@ class LyfePayGateway extends PaymentGateway
      */
     private function makePaymentRequest(array $data): array
     {
-
         $cc_info                  = give_get_donation_lyfepay_cc_info();
 
         // Use the card details in this function calling from "give_get_donation_lyfepay_cc_info" function.
@@ -243,52 +220,19 @@ class LyfePayGateway extends PaymentGateway
             'cardholder_name' => $cc_holder,
         ]);
 
-        try {
+        $response = wp_remote_post($apiUrl . '/charges/', array(
+            'method'    => 'POST',
+            'headers'   => array(
+                'X-Api-Key'      => $apiKey,
+                'X-Api-Secret'   => $apiSecretKey,
+                'Content-Type'   => 'application/json',
+            ),
+            'body'               => $body,
+        ));
 
-            $curl = curl_init();
 
-            curl_setopt_array($curl, array(
-                CURLOPT_URL => $apiUrl . '/charges/',
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_ENCODING => '',
-                CURLOPT_MAXREDIRS => 10,
-                CURLOPT_TIMEOUT => 0,
-                CURLOPT_FOLLOWLOCATION => true,
-                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-                CURLOPT_CUSTOMREQUEST => 'POST',
-                CURLOPT_POSTFIELDS => '{
-                    "payment_mode": "auth_and_capture",
-                    "card_number": "' . $cc_number . '",
-                    "exp_month": "' . $month . '",
-                    "exp_year": "' . $year . '",
-                    "cvc": "' . $cc_cvc . '",
-                    "currency": "' . $data['currency'] . '",
-                    "cardholder_name": "' . $cc_holder . '",
-                    "name": "' . $data['name'] . '",
-                    "email": "' . $data['email'] . '",
-                    "amount": "' . $data['amount'] . '",
-                    "description": "GiveWp Donation"
-                }',
-                CURLOPT_HTTPHEADER => array(
-                    'X-Api-Key: ' . $apiKey . '',
-                    'X-Api-Secret: ' . $apiSecretKey . '',
-                    'Content-Type: application/json',
-                    // 'User-Agent: LyfePayEmulator/1.0',
-                ),
-            ));
-
-            $response = curl_exec($curl);
-
-            curl_close($curl);
-            // Decode JSON response to PHP array
-            $response = json_decode($response, true);
-
-            // echo $response;
-            return $response;
-        } catch (Exception $e) {
-            // Improved exception handling
-            echo 'Curl error: ' . $e->getMessage() . "\n";
-            echo 'Curl error number: ' . $e->getCode() . "\n";
-        }
+        $response_body = wp_remote_retrieve_body($response);
+        $response_data = json_decode($response_body, true);
+        return $response_data;
     }
 }

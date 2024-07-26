@@ -23,8 +23,6 @@ class LyfePayWebhookHandler
     {
         if (get_query_var('lyfepay')) {
             $payload = json_decode(file_get_contents('php://input'), true);
-			print_r($payload);
-			die();
             if ($payload === null) {
                 // Handle JSON decoding error
                 status_header(400);
