@@ -306,7 +306,7 @@ function lyfepay_givewp_custom_ach_form($form_id)
 
         echo '<p id="give-routing-number-wrap-' . $form_id . '"  class="form-row form-row-first form-row-responsive"><input type="tel" autocomplete="off" id="routing_number_' . $form_id . '" pattern="[0-9]*" placeholder="Routing number" size="9" name="routing_number" class="easy-routing-number give-input required" area-required="true" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" required /></p>';
 
-        echo '<p id="give-account-type-wrap-' . $form_id . '"  class="form-row form-row-last form-row-responsive"><select autocomplete="off" id="account_type_' . $form_id . '"  name="account_type" class="easy-account_type give-input required" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" required ><option value="">Account Type *</option><option value="saving">Saving</option><option value="checking">Checking</option><option value="general-ledger">General Ledger</option></select></p>';
+        echo '<p id="give-account-type-wrap-' . $form_id . '"  class="form-row form-row-last form-row-responsive"><select autocomplete="off" id="account_type_' . $form_id . '"  name="account_type" class="easy-account_type give-input required" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" required ><option value="">Account Type *</option><option value="saving">Saving</option><option value="checking">Checking</option><option value="ledger">General Ledger</option></select></p>';
 
         ?>
     </fieldset>
@@ -342,12 +342,12 @@ function lyfepay_givewp_custom_ach_form($form_id)
 
 <?php
 
-    // Remove Address Fields if user has option enabled.
+
     $billing_fields_enabled = gateway_enable_disable_billing_address();
     if ($billing_fields_enabled) {
-        do_action('give_after_cc_fields', 'give_default_cc_address_fields');
+        do_action('give_after_cc_fields', $form_id);
     }
-    // do_action('give_after_cc_fields', $form_id);
+
     $form = ob_get_clean();
     return $form;
 }
