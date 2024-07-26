@@ -34,7 +34,7 @@ function webhook_file_callback()
     if (isset($_GET['give-listener']) && $_GET['give-listener'] == 'lyfepay') {
         $rawRequestBody = file_get_contents("php://input");
 
-        require_once 'webhook/lyfepay-webhook-handler.php';
+        require_once plugin_dir_path(__FILE__) . 'webhook/lyfepay-webhook-handler.php';
         $webhook_handler = new LyfePayWebhookHandler(site_url() . '?give-listener=lyfepay');
         $webhook_handler->handle_webhook_request($rawRequestBody);
     }
