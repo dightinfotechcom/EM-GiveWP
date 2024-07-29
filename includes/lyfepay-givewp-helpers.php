@@ -59,7 +59,7 @@ function lyfepay_givewp_custom_credit_card_form($form_id)
     do_action('give_before_cc_fields', $form_id);
     $billing_fields_enabled = gateway_enable_disable_billing_address();
     if ($billing_fields_enabled) {
-        do_action('give_after_cc_fields', 'give_default_cc_address_fields');
+        do_action('give_after_cc_fields', $form_id);
     }
 ?>
     <fieldset id="give_cc_fields-<?php echo $form_id; ?>" class="give-do-validate">
