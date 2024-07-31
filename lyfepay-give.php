@@ -10,7 +10,7 @@
 
  * Description:        	Adds the lyfePAY payment gateway to the available Give payment methods.
 
- * Version:            	2.0.5
+ * Version:            	2.0.6
 
  * Requires at least:   4.9
 
@@ -45,7 +45,7 @@ if (!defined('ABSPATH')) {
 
 if (!defined('LYFEPAY_FOR_GIVE_VERSION')) {
 
-    define('LYFEPAY_FOR_GIVE_VERSION', '2.0.5');
+    define('LYFEPAY_FOR_GIVE_VERSION', '2.0.6');
 }
 
 
